@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вы начальник самокатов — Бизнес-симулятор</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --bg-elevated: #171a23;
+    --card: #1c202b;
+    --card-hover: #222735;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-top: rgba(255, 255, 255, 0.16);
+    --text: #eef1f8;
+    --text-muted: #98a2b3;
+    --accent: #facc15;
+    --accent-soft: rgba(250, 204, 21, 0.14);
+    --accent-text: #111318;
+    --success: #34d399;
+    --danger: #f87171;
+    --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    --blur: 0px;
+  }
+
+  body.light {
+    --bg: #f4f3ef;
+    --bg-elevated: #eceae3;
+    --card: #ffffff;
+    --card-hover: #faf9f6;
+    --border: rgba(15, 23, 42, 0.08);
+    --border-top: rgba(255, 255, 255, 0.9);
+    --text: #18181b;
+    --text-muted: #64748b;
+    --shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  }
+
+  body.urent {
+    --accent: #a855f7;
+    --accent-soft: rgba(168, 85, 247, 0.15);
+    --accent-text: #ffffff;
+  }
+
+  body.glass {
+    --card: rgba(28, 32, 43, 0.62);
+    --card-hover: rgba(36, 41, 56, 0.75);
+    --blur: 18px;
+  }
+
+  body.light.glass {
+    --card: rgba(255, 255, 255, 0.68);
+    --card-hover: rgba(255, 255, 255, 0.85);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.35s ease, color 0.35s ease;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  .glow-orb {
+    position: fixed;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.08;
+    filter: blur(110px);
+    pointer-events: none;
+    z-index: 0;
+    transition: background 0.5s ease;
+  }
+  .glow-1 { top: -140px; left: -120px; }
+  .glow-2 { bottom: -160px; right: -100px; }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px 18px 60px;
+  }
+
+  h1, h2, h3, .brand-title, .btn-primary {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .num { font-variant-numeric: tabular-nums; }
+
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    background: var(--card);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border-top);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .pills { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+  }
+
+  .pill.brand {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: transparent;
+  }
+
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 13.5px;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s, box-shadow 0.2s, opacity 0.2s;
+  }
+  button:active { transform: scale(0.97); }
+
+  .btn-ghost {
+    padding: 8px 13px;
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--card-hover); }
+
+  .btn-primary {
+    padding: 11px 20px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-weight: 700;
+    box-shadow: 0 6px 20px var(--accent-soft);
+  }
+  .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+  .screen { display: none; animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero {
+    text-align: center;
+    padding: 36px 22px;
+    background: var(--card);
+    backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border-top);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 22px;
+  }
+  .hero h1 { font-size: clamp(24px, 4vw, 34px); font-weight: 800; margin-bottom: 8px; }
+  .hero p { color: var(--text-muted); max-width: 560px; margin: 0 auto 24px; font-size: 15px; }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 22px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-bottom: 24px; }
+
+  .card {
+    background: var(--card);
+    backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border-top);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s, background 0.25s;
+  }
+
+  .select-card { cursor: pointer; position: relative; text-align: left; }
+  .select-card:hover { transform: translateY(-3px); background: var(--card-hover); }
+  .select-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), var(--shadow);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .section-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .section-sub { font-size: 13.5px; color: var(--text-muted); margin-bottom: 14px; }
+
+  .quest-card { margin-bottom: 14px; }
+  .quest-card.urgent { border-color: var(--accent); }
+  .quest-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .quest-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 14px; }
+
+  .choice-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+  .choice-btn {
+    padding: 12px 14px;
+    text-align: left;
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .choice-btn:hover { border-color: var(--accent); background: var(--card-hover); }
+  .choice-btn.risk { border-color: rgba(250, 204, 21, 0.35); }
+  body.urent .choice-btn.risk { border-color: rgba(168, 85, 247, 0.45); }
+
+  .outcome {
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    background: var(--bg-elevated);
+  }
+  .outcome.win { color: var(--success); border: 1px solid rgba(52, 211, 153, 0.25); }
+  .outcome.lose { color: var(--danger); border: 1px solid rgba(248, 113, 113, 0.25); }
+
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 10, 15, 0.65);
+    backdrop-filter: blur(8px);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-bg.open { display: flex; animation: fadeUp 0.25s ease; }
+  .modal {
+    width: 100%;
+    max-width: 520px;
+    max-height: 88vh;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border-top);
+    border-radius: 22px;
+    padding: 22px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .slot-item, .shop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+  }
+  .slot-item.active-slot { border-color: var(--accent); }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    font-size: 13.5px;
+    font-weight: 600;
+    z-index: 60;
+    transform: translateY(120px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .pulse-green { color: var(--success) !important; }
+  .pulse-red { color: var(--danger) !important; }
+</style>
+</head>
+<body>
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="pills">
+      <span class="pill brand"><span class="dot"></span><span id="ui-brand">Яндекс Go</span></span>
+      <span class="pill" id="ui-slot">Слот 1</span>
+      <span class="pill num" id="ui-budget">💰 420 000 ₽</span>
+      <span class="pill num" id="ui-day">День 1</span>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="btn-shop" style="display:none" onclick="openModal('shop-modal')">🏪 Магазин</button>
+      <button class="btn-primary" id="btn-end-day" style="display:none" onclick="finishDay()">Завершить день ✓</button>
+      <button class="btn-ghost" id="btn-sound" onclick="toggleSound()">🔊</button>
+      <button class="btn-ghost" onclick="openModal('settings-modal')">⚙️ Настройки</button>
+    </div>
+  </header>
+
+  <!-- ЭКРАН 1: ВЫБОР КОМПАНИИ -->
+  <section id="scr-cover" class="screen active">
+    <div class="hero">
+      <span class="badge">Симулятор шеринг-бизнеса</span>
+      <h1>Вы начальник самокатов!</h1>
+      <p>Управляйте городским парком, арендуйте зарядные базы, решайте кризисные задачи и удерживайте бизнес в плюсе в жёстких условиях рынка.</p>
+      <div class="grid-2" style="text-align:left">
+        <div class="card select-card selected" id="brand-yandex" onclick="selectBrand('yandex')">
+          <span class="badge">Жёлтая франшиза</span>
+          <h3>Яндекс Go</h3>
+          <p class="section-sub" style="margin:6px 0 0">Высокий поток заказов из экосистемы и плотный спрос в спальных районах.</p>
+        </div>
+        <div class="card select-card" id="brand-urent" onclick="selectBrand('urent')">
+          <span class="badge">Фиолетовая франшиза</span>
+          <h3>МТС Юрент</h3>
+          <p class="section-sub" style="margin:6px 0 0">Сильные позиции в центре города, туристических зонах и на набережных.</p>
+        </div>
+      </div>
+      <button class="btn-primary" style="font-size:15px; padding:14px 28px" onclick="goSetup()">Перейти к запуску парка ➔</button>
+    </div>
+  </section>
+
+  <!-- ЭКРАН 2: СТАРТОВАЯ СБОРКА (ТОЛЬКО ПЕРЕД ДНЁМ 1) -->
+  <section id="scr-setup" class="screen">
+    <h2 class="section-title">1. Размер стартового парка</h2>
+    <p class="section-sub">При первом запуске списывается разовый взнос за открытие, далее — ежедневная аренда.</p>
+    <div class="grid-3" id="list-parks"></div>
+
+    <h2 class="section-title">2. Аренда базы и зарядной станции</h2>
+    <p class="section-sub">Вместимость базы должна покрывать размер вашего парка. Быстрая зарядка увеличивает выручку.</p>
+    <div class="grid-3" id="list-bases"></div>
+
+    <h2 class="section-title">3. Команда смены</h2>
+    <p class="section-sub">От квалификации персонала зависит устойчивость к поломкам, штрафам и простоям.</p>
+    <div class="grid-3" id="list-teams"></div>
+
+    <div class="card" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px">
+      <div>
+        <div style="font-weight:700" id="setup-summary">Итого к списанию на старте: 110 000 ₽</div>
+        <div class="section-sub" style="margin:2px 0 0" id="setup-warn">После старта 1-го дня изменить сборку можно будет только через Магазин.</div>
+      </div>
+      <button class="btn-primary" onclick="launchFirstDay()">Запустить День 1 ▶</button>
+    </div>
+  </section>
+
+  <!-- ЭКРАН 3: РАБОЧАЯ СМЕНА -->
+  <section id="scr-shift" class="screen">
+    <div class="card" style="margin-bottom:18px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px">
+      <div>
+        <div style="font-weight:700; font-size:15px" id="shift-info">Парк: 35 шт. • База: Гараж в промзоне</div>
+        <div class="section-sub num" style="margin:2px 0 0" id="shift-progress">Выполнено задач: 0/5 • Срочных заказов за смену: 0/3</div>
+      </div>
+      <div class="actions">
+        <button class="btn-ghost" onclick="openModal('shop-modal')">🏪 Магазин</button>
+        <button class="btn-primary" onclick="finishDay()">Завершить день ✓</button>
+      </div>
+    </div>
+    <div id="quests-container"></div>
+  </section>
+
+  <!-- ЭКРАН 4: ИТОГИ ДНЯ -->
+  <section id="scr-summary" class="screen">
+    <div class="card" style="max-width:620px; margin:0 auto">
+      <span class="badge" id="sum-badge">Отчёт за смену</span>
+      <h2 style="margin-bottom:14px" id="sum-title">Итоги Дня 1</h2>
+      <div id="sum-rows" class="num" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px; font-size:14px"></div>
+      <div class="actions">
+        <button class="btn-ghost" onclick="openModal('shop-modal')">🏪 Магазин улучшений</button>
+        <button class="btn-primary" onclick="startNextDay()">Начать следующий день ➔</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- МОДАЛКА: НАСТРОЙКИ И 3 СЛОТА -->
+<div class="modal-bg" id="settings-modal" onclick="if(event.target===this)closeModal('settings-modal')">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>⚙️ Настройки и слоты сохранения</h3>
+      <button class="btn-ghost" onclick="closeModal('settings-modal')">✕</button>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px">
+      <button class="btn-ghost" onclick="toggleTheme()">🌓 Тёмная / Светлая тема</button>
+      <button class="btn-ghost" onclick="toggleGlass()">🪟 Стеклянное стекло</button>
+      <button class="btn-ghost" onclick="toggleSound()">🔊 Звук вкл/выкл</button>
+    </div>
+    <div class="section-sub" style="margin-bottom:10px">Автосохранение работает автоматически при каждом действии и выходе с сайта.</div>
+    <div id="slots-list"></div>
+  </div>
+</div>
+
+<!-- МОДАЛКА: МАГАЗИН -->
+<div class="modal-bg" id="shop-modal" onclick="if(event.target===this)closeModal('shop-modal')">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>🏪 Магазин развития</h3>
+      <button class="btn-ghost" onclick="closeModal('shop-modal')">✕</button>
+    </div>
+    <div class="section-sub" style="margin-bottom:12px">Расширение парка и инфраструктуры после запуска бизнеса стоит дороже стартового пакета.</div>
+    <div id="shop-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">⚡ Пришёл срочный заказ!</div>
+<script>
+const PARKS = [
+  { id: 0, name: 'Малый парк (35 шт.)', count: 35, fee: 110000, rent: 22000, rev: 68000, desc: 'Аккуратный старт для одного района' },
+  { id: 1, name: 'Средний парк (60 шт.)', count: 60, fee: 210000, rent: 38000, rev: 114000, desc: 'Оптимальный поток заказов и выручки' },
+  { id: 2, name: 'Крупный парк (90 шт.)', count: 90, fee: 320000, rent: 56000, rev: 168000, desc: 'Максимальный охват всего города' }
+];
+
+const BASES = [
+  { id: 0, name: 'Гараж в промзоне', cap: 35, rent: 11000, bonus: -0.06, desc: 'До 35 шт. • Слабая сеть 220В (−6% к выручке)' },
+  { id: 1, name: 'Тёплый ангар у ТТК', cap: 60, rent: 22000, bonus: 0, desc: 'До 60 шт. • Стандартные стеллажи зарядки (0%)' },
+  { id: 2, name: 'Смарт-хаб в центре', cap: 110, rent: 38000, bonus: 0.07, desc: 'До 110 шт. • Быстрые станции (+7% к выручке)' }
+];
+
+const TEAMS = [
+  { id: 0, name: 'Студенты-стажёры', salary: 12000, desc: 'Дешёвая смена, но чаще бывают накладки' },
+  { id: 1, name: 'Опытная бригада', salary: 23000, desc: 'Быстрый ремонт и своевременная расстановка' },
+  { id: 2, name: 'Топ-инженеры', salary: 36000, desc: 'Максимальная скорость обслуживания без простоев' }
+];
+
+const PLANNED_QUESTS = [
+  {
+    title: '🌿 Внезапный ливень в час пик',
+    desc: 'Поездки резко упали, самокаты мокнут на окраинах.',
+    safe: { text: 'Запустить промокод на дождь (−9 000 ₽)', delta: -9000, msg: 'Промокод удержал часть аудитории (−9 000 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): поднять тариф для стойких', win: 16000, lose: -26000, winMsg: 'Сработало! Повышенный тариф принёс +16 000 ₽.', loseMsg: 'Клиенты ушли к конкурентам, убыток −26 000 ₽.' }
+  },
+  {
+    title: '🔋 Перегрузка зарядных стоек',
+    desc: 'На базе выбило автоматы на ночной смене, часть АКБ не зарядилась.',
+    safe: { text: 'Вызвать электрика по срочному тарифу (−11 000 ₽)', delta: -11000, msg: 'Электрик восстановил линию к утру (−11 000 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): перекинуть фазу вручную', win: 8000, lose: -29000, winMsg: 'Успех! Сэкономили на вызове и выпустили весь парк (+8 000 ₽).', loseMsg: 'Сгорел блок питания стоек! Ремонт обошёлся в −29 000 ₽.' }
+  },
+  {
+    title: '🧯 Проверка пожарной инспекции на базе',
+    desc: 'Инспектор проверяет хранение литиевых аккумуляторов на складе.',
+    safe: { text: 'Оплатить срочную сертификацию стеллажей (−13 000 ₽)', delta: -13000, msg: 'Документы оформлены без замечаний (−13 000 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): пройти проверку без доплат', win: 6000, lose: -34000, winMsg: 'Инспектор похвалил порядок на базе (+6 000 ₽ бонус).', loseMsg: 'Выписан крупный штраф за хранение АКБ (−34 000 ₽).' }
+  },
+  {
+    title: '🚨 Рейд городских эвакуаторов',
+    desc: 'Инспекция забирает самокаты с узких тротуаров в центре.',
+    safe: { text: 'Нанять доп. газель для вывоза (−10 000 ₽)', delta: -10000, msg: 'Самокаты вовремя переставлены на хабы (−10 000 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): раскидать силами дежурных', win: 11000, lose: -28000, winMsg: 'Успели до приезда эвакуатора и собрали спрос (+11 000 ₽).', loseMsg: '12 самокатов увезли на штрафстоянку (−28 000 ₽).' }
+  },
+  {
+    title: '🔧 Массовый износ покрышек и тормозов',
+    desc: 'После выходных у партии самокатов стерлись колодки.',
+    safe: { text: 'Закупить оригинальные запчасти (−12 000 ₽)', delta: -12000, msg: 'Парк обслужен и безопасен (−12 000 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): поставить аналог подешевле', win: 9000, lose: -27000, winMsg: 'Детали встали отлично, сэкономили бюджет (+9 000 ₽).', loseMsg: 'Колодки рассыпались на линии, срочный отзыв (−27 000 ₽).' }
+  },
+  {
+    title: '📉 Агрессивный демпинг конкурента',
+    desc: 'Соперник обнулил старт поездки в вашем главном районе.',
+    safe: { text: 'Запустить таргетированную акцию (−11 500 ₽)', delta: -11500, msg: 'Удержали долю поездок в районе (−11 500 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): не снижать цены и ждать', win: 17000, lose: -25000, winMsg: 'У конкурента кончились самокаты, весь поток пошёл к нам (+17 000 ₽).', loseMsg: 'Самокаты простояли полдня без поездок (−25 000 ₽).' }
+  }
+];
+
+const URGENT_QUESTS = [
+  {
+    title: '⚡ СРОЧНЫЙ ЗАКАЗ: Ночной спрос у вокзала',
+    desc: 'Прибыли два скоростных поезда, такси не хватает.',
+    safe: { text: 'Включить ночной бонус (+9 500 ₽)', delta: 9500, msg: 'Самокаты разобрали за 10 минут (+9 500 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): включить двойной коэффициент', win: 24000, lose: -18000, winMsg: 'Ажиотаж! Выручка взлетела на +24 000 ₽.', loseMsg: 'Пассажиры отказались ехать по двойной цене (−18 000 ₽ за перегон).' }
+  },
+  {
+    title: '⚡ СРОЧНЫЙ ЗАКАЗ: Закрытие концерта на арене',
+    desc: '15 000 зрителей выходят к метро, нужен срочный подвоз парка.',
+    safe: { text: 'Подогнать 20 самокатов ко входу (+12 000 ₽)', delta: 12000, msg: 'Отличная вечерняя касса (+12 000 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): стянуть весь свободный парк', win: 31000, lose: -24000, winMsg: 'Бинго! Разобрали абсолютно всё (+31 000 ₽).', loseMsg: 'Полиция перекрыла подъезд, машины простояли в пробке (−24 000 ₽).' }
+  },
+  {
+    title: '⚡ СРОЧНЫЙ ЗАКАЗ: Корпоративный заезд IT-компании',
+    desc: 'Офис просит 25 заряженных самокатов на тимбилдинг через час.',
+    safe: { text: 'Выделить стандартный пакет (+11 000 ₽)', delta: 11000, msg: 'Заказ выполнен чётко в срок (+11 000 ₽).' },
+    risk: { text: '🎲 Рискнуть (45%): продать VIP-тариф с брендированием', win: 28000, lose: -20000, winMsg: 'Клиент в восторге и оплатил премиум-счёт (+28 000 ₽).', loseMsg: 'Не успели оклеить парк, заказчик отменил бронь (−20 000 ₽).' }
+  }
+];
+
+function defaultSlot() {
+  return {
+    brand: 'yandex',
+    budget: 420000,
+    day: 1,
+    locked: false,
+    screen: 'cover',
+    parkId: 0,
+    extraScooters: 0,
+    baseId: 0,
+    teamId: 0,
+    turboCharge: false,
+    quests: [],
+    urgentSpawned: 0,
+    urgentMax: 3
+  };
+}
+
+let app = {
+  activeSlot: 0,
+  theme: 'dark',
+  glass: false,
+  sound: true,
+  slots: [defaultSlot(), defaultSlot(), defaultSlot()]
+};
+
+let urgentTimer = null;
+let audioCtx = null;
+
+function playTone(type) {
+  if (!app.sound) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    if (type === 'click') {
+      osc.frequency.setValueAtTime(520, now);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.start(now); osc.stop(now + 0.06);
+    } else if (type === 'win') {
+      osc.frequency.setValueAtTime(580, now);
+      osc.frequency.setValueAtTime(860, now + 0.08);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+      osc.start(now); osc.stop(now + 0.24);
+    } else if (type === 'lose') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.linearRampToValueAtTime(140, now + 0.22);
+      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+      osc.start(now); osc.stop(now + 0.24);
+    } else if (type === 'urgent') {
+      osc.frequency.setValueAtTime(740, now);
+      osc.frequency.setValueAtTime(980, now + 0.09);
+      gain.gain.setValueAtTime(0.07, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.start(now); osc.stop(now + 0.25);
+    }
+  } catch (e) {}
+}
+
+function S() { return app.slots[app.activeSlot]; }
+
+function saveAll() {
+  try { localStorage.setItem('scooter_boss_v22', JSON.stringify(app)); } catch (e) {}
+}
+
+function loadAll() {
+  try {
+    const raw = localStorage.getItem('scooter_boss_v22');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.slots) && parsed.slots.length === 3) {
+        app = Object.assign(app, parsed);
+      }
+    }
+  } catch (e) {}
+}
+
+function fmt(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+
+function applyAppearance() {
+  document.body.classList.toggle('light', app.theme === 'light');
+  document.body.classList.toggle('glass', !!app.glass);
+  document.body.classList.toggle('urent', S().brand === 'urent');
+  document.getElementById('btn-sound').textContent = app.sound ? '🔊' : '🔇';
+}
+
+function updateTopbar() {
+  const s = S();
+  applyAppearance();
+  document.getElementById('ui-brand').textContent = s.brand === 'yandex' ? 'Яндекс Go' : 'МТС Юрент';
+  document.getElementById('ui-slot').textContent = 'Слот ' + (app.activeSlot + 1);
+  document.getElementById('ui-budget').textContent = '💰 ' + fmt(s.budget);
+  document.getElementById('ui-day').textContent = 'День ' + s.day;
+
+  const inShift = s.screen === 'shift';
+  document.getElementById('btn-end-day').style.display = inShift ? 'inline-block' : 'none';
+  document.getElementById('btn-shop').style.display = (inShift || s.screen === 'summary') ? 'inline-block' : 'none';
+}
+
+function pulseBudget(delta) {
+  const el = document.getElementById('ui-budget');
+  el.classList.remove('pulse-green', 'pulse-red');
+  void el.offsetWidth;
+  el.classList.add(delta >= 0 ? 'pulse-green' : 'pulse-red');
+  setTimeout(() => el.classList.remove('pulse-green', 'pulse-red'), 900);
+}
+
+function showScreen(name) {
+  const s = S();
+  if (name === 'setup' && s.locked) name = 'shift';
+  s.screen = name;
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('scr-' + name).classList.add('active');
+  updateTopbar();
+  if (name === 'setup') renderSetup();
+  if (name === 'shift') { renderShift(); scheduleUrgent(); }
+  else { clearTimeout(urgentTimer); }
+  saveAll();
+}
+
+function selectBrand(b) {
+  playTone('click');
+  S().brand = b;
+  document.getElementById('brand-yandex').classList.toggle('selected', b === 'yandex');
+  document.getElementById('brand-urent').classList.toggle('selected', b === 'urent');
+  updateTopbar();
+  saveAll();
+}
+
+function goSetup() {
+  playTone('click');
+  if (S().locked) showScreen('shift');
+  else showScreen('setup');
+}
+
+function renderSetup() {
+  const s = S();
+  document.getElementById('list-parks').innerHTML = PARKS.map(p => `
+    <div class="card select-card ${s.parkId===p.id?'selected':''}" onclick="pickSetup('parkId',${p.id})">
+      <span class="badge">${p.count} самокатов</span>
+      <h3>${p.name}</h3>
+      <p class="section-sub" style="margin:6px 0 10px">${p.desc}</p>
+      <div class="num" style="font-size:13px; font-weight:600">Взнос: ${fmt(p.fee)} • Аренда: ${fmt(p.rent)}/д</div>
+    </div>`).join('');
+
+  document.getElementById('list-bases').innerHTML = BASES.map(b => `
+    <div class="card select-card ${s.baseId===b.id?'selected':''}" onclick="pickSetup('baseId',${b.id})">
+      <span class="badge">До ${b.cap} шт.</span>
+      <h3>${b.name}</h3>
+      <p class="section-sub" style="margin:6px 0 10px">${b.desc}</p>
+      <div class="num" style="font-size:13px; font-weight:600">Аренда базы: ${fmt(b.rent)}/д</div>
+    </div>`).join('');
+
+  document.getElementById('list-teams').innerHTML = TEAMS.map(t => `
+    <div class="card select-card ${s.teamId===t.id?'selected':''}" onclick="pickSetup('teamId',${t.id})">
+      <span class="badge">Смена</span>
+      <h3>${t.name}</h3>
+      <p class="section-sub" style="margin:6px 0 10px">${t.desc}</p>
+      <div class="num" style="font-size:13px; font-weight:600">Зарплата смены: ${fmt(t.salary)}/д</div>
+    </div>`).join('');
+
+  const p = PARKS[s.parkId], b = BASES[s.baseId];
+  const ok = b.cap >= p.count;
+  document.getElementById('setup-summary').textContent = 'Итого к списанию на старте: ' + fmt(p.fee);
+  document.getElementById('setup-warn').textContent = ok
+    ? 'После старта 1-го дня вернуться к этому экрану будет нельзя — расширение только через Магазин.'
+    : '⚠️ Выбранная база не вмещает ' + p.count + ' самокатов! Выберите базу побольше.';
+  document.getElementById('setup-warn').style.color = ok ? '' : 'var(--danger)';
+}
+
+function pickSetup(key, val) {
+  playTone('click');
+  S()[key] = val;
+  renderSetup();
+  saveAll();
+}
+
+function launchFirstDay() {
+  const s = S();
+  const p = PARKS[s.parkId], b = BASES[s.baseId];
+  if (b.cap < p.count) {
+    playTone('lose');
+    showToast('⚠️ База слишком мала для этого парка!');
+    return;
+  }
+  if (s.budget < p.fee) {
+    playTone('lose');
+    showToast('⚠️ Недостаточно средств для стартового взноса!');
+    return;
+  }
+  playTone('win');
+  s.budget -= p.fee;
+  s.locked = true;
+  pulseBudget(-p.fee);
+  generateShiftQuests();
+  showScreen('shift');
+}
+
+function generateShiftQuests() {
+  const s = S();
+  const shuffled = [...PLANNED_QUESTS].sort(() => Math.random() - 0.5).slice(0, 5);
+  s.quests = shuffled.map((q, idx) => ({
+    uid: 'p_' + s.day + '_' + idx,
+    urgent: false,
+    title: q.title,
+    desc: q.desc,
+    safe: q.safe,
+    risk: q.risk,
+    done: false,
+    resultMsg: '',
+    win: true
+  }));
+  s.urgentSpawned = 0;
+  s.urgentMax = Math.random() < 0.5 ? 2 : 3;
+}
+
+function scheduleUrgent() {
+  clearTimeout(urgentTimer);
+  const s = S();
+  if (s.screen !== 'shift' || s.urgentSpawned >= s.urgentMax) return;
+  const delay = (5 + Math.floor(Math.random() * 11)) * 1000;
+  urgentTimer = setTimeout(() => {
+    if (S().screen !== 'shift' || S().urgentSpawned >= S().urgentMax) return;
+    const tpl = URGENT_QUESTS[Math.floor(Math.random() * URGENT_QUESTS.length)];
+    S().urgentSpawned++;
+    S().quests.unshift({
+      uid: 'u_' + Date.now(),
+      urgent: true,
+      title: tpl.title,
+      desc: tpl.desc,
+      safe: tpl.safe,
+      risk: tpl.risk,
+      done: false,
+      resultMsg: '',
+      win: true
+    });
+    playTone('urgent');
+    showToast('⚡ Пришёл срочный заказ!');
+    renderShift();
+    saveAll();
+    scheduleUrgent();
+  }, delay);
+}
+
+function renderShift() {
+  const s = S();
+  const p = PARKS[s.parkId], b = BASES[s.baseId];
+  const totalCount = p.count + s.extraScooters;
+  const doneCount = s.quests.filter(q => q.done).length;
+  document.getElementById('shift-info').textContent = `Парк: ${totalCount} шт. • База: ${b.name} (до ${b.cap} шт.)`;
+  document.getElementById('shift-progress').textContent = `Выполнено задач: ${doneCount}/${s.quests.length} • Срочных заказов за смену: ${s.urgentSpawned}/${s.urgentMax}`;
+
+  document.getElementById('quests-container').innerHTML = s.quests.map((q, i) => `
+    <div class="card quest-card ${q.urgent ? 'urgent' : ''}">
+      <span class="badge">${q.urgent ? '⚡ Срочный заказ' : '📋 Плановая задача'}</span>
+      <div class="quest-title">${q.title}</div>
+      <div class="quest-desc">${q.desc}</div>
+      ${q.done
+        ? `<div class="outcome ${q.win ? 'win' : 'lose'}">${q.resultMsg}</div>`
+        : `<div class="choice-row">
+            <button class="choice-btn" onclick="resolveQuest(${i}, false)">${q.safe.text}</button>
+            <button class="choice-btn risk" onclick="resolveQuest(${i}, true)">${q.risk.text}</button>
+          </div>`
+      }
+    </div>`).join('');
+}
+
+function resolveQuest(idx, isRisk) {
+  const s = S();
+  const q = s.quests[idx];
+  if (!q || q.done) return;
+  let delta = 0, msg = '', win = true;
+  if (!isRisk) {
+    delta = q.safe.delta;
+    msg = q.safe.msg;
+    win = delta >= 0;
+  } else {
+    if (Math.random() < 0.45) {
+      delta = q.risk.win;
+      msg = '🍀 Удача (45%)! ' + q.risk.winMsg;
+      win = true;
+    } else {
+      delta = q.risk.lose;
+      msg = '💥 Не повезло (55%)! ' + q.risk.loseMsg;
+      win = false;
+    }
+  }
+  s.budget += delta;
+  q.done = true;
+  q.resultMsg = msg;
+  q.win = win;
+  playTone(win ? 'win' : 'lose');
+  updateTopbar();
+  pulseBudget(delta);
+  renderShift();
+  saveAll();
+}
+
+function finishDay() {
+  clearTimeout(urgentTimer);
+  const s = S();
+  const p = PARKS[s.parkId], b = BASES[s.baseId], t = TEAMS[s.teamId];
+  const mult = 1 + b.bonus + (s.turboCharge ? 0.08 : 0);
+  const baseRev = Math.round((p.rev + s.extraScooters * 1850) * mult);
+  const tax = Math.round(baseRev * 0.15);
+  const wear = s.day * 3500;
+  const undone = s.quests.filter(q => !q.done).length;
+  const penalty = undone * 9000;
+  const expenses = p.rent + b.rent + t.salary + tax + wear + penalty;
+  const net = baseRev - expenses;
+
+  s.budget += net;
+  playTone(net >= 0 ? 'win' : 'lose');
+  pulseBudget(net);
+
+  document.getElementById('sum-badge').textContent = 'Отчёт за День ' + s.day;
+  document.getElementById('sum-title').textContent = net >= 0 ? 'Смена закрыта в плюс!' : 'Тяжёлый день: смена в минус';
+  document.getElementById('sum-rows').innerHTML = `
+    <div style="display:flex;justify-content:space-between"><span>Выручка парка:</span><b style="color:var(--success)">+${fmt(baseRev)}</b></div>
+    <div style="display:flex;justify-content:space-between"><span>Аренда парка и базы:</span><span>−${fmt(p.rent + b.rent)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Зарплата команды:</span><span>−${fmt(t.salary)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Налог 15% и износ дня:</span><span>−${fmt(tax + wear)}</span></div>
+    ${penalty ? `<div style="display:flex;justify-content:space-between;color:var(--danger)"><span>Штраф за невыполненные задачи (${undone}):</span><span>−${fmt(penalty)}</span></div>` : ''}
+    <hr style="border:none;border-top:1px solid var(--border);margin:4px 0">
+    <div style="display:flex;justify-content:space-between;font-size:16px"><b>Итог смены:</b><b style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':''}${fmt(net)}</b></div>
+  `;
+  showScreen('summary');
+}
+
+function startNextDay() {
+  playTone('click');
+  const s = S();
+  s.day++;
+  generateShiftQuests();
+  showScreen('shift');
+}
+
+function openModal(id) {
+  playTone('click');
+  if (id === 'settings-modal') renderSlots();
+  if (id === 'shop-modal') renderShop();
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  playTone('click');
+  document.getElementById(id).classList.remove('open');
+}
+
+function renderSlots() {
+  document.getElementById('slots-list').innerHTML = app.slots.map((sl, i) => `
+    <div class="slot-item ${i === app.activeSlot ? 'active-slot' : ''}">
+      <div>
+        <div style="font-weight:700">Слот ${i + 1} ${i === app.activeSlot ? '(Активен)' : ''}</div>
+        <div class="section-sub num" style="margin:2px 0 0">${sl.brand === 'yandex' ? 'Яндекс Go' : 'МТС Юрент'} • День ${sl.day} • ${fmt(sl.budget)}</div>
+      </div>
+      <div class="actions">
+        ${i !== app.activeSlot ? `<button class="btn-primary" onclick="switchSlot(${i})">Выбрать</button>` : ''}
+        <button class="btn-ghost" onclick="resetSlot(${i})">Сброс</button>
+      </div>
+    </div>`).join('');
+}
+
+function switchSlot(i) {
+  playTone('click');
+  app.activeSlot = i;
+  renderSlots();
+  showScreen(S().screen);
+}
+
+function resetSlot(i) {
+  playTone('lose');
+  app.slots[i] = defaultSlot();
+  renderSlots();
+  if (i === app.activeSlot) showScreen('cover');
+  saveAll();
+}
+
+function renderShop() {
+  const s = S();
+  const p = PARKS[s.parkId], b = BASES[s.baseId];
+  const totalCount = p.count + s.extraScooters;
+  const items = [
+    {
+      title: '🛴 Докупить +10 самокатов',
+      desc: `Сейчас в парке: ${totalCount} шт. (лимит базы: ${b.cap} шт.)`,
+      price: 95000,
+      can: totalCount + 10 <= b.cap,
+      reason: 'Нужна база побольше',
+      buy: () => { s.extraScooters += 10; }
+    },
+    {
+      title: '🏭 Расширить базу до следующего уровня',
+      desc: b.id < 2 ? `Переезд в: ${BASES[b.id + 1].name} (до ${BASES[b.id + 1].cap} шт.)` : 'Максимальный Смарт-хаб уже открыт',
+      price: 145000,
+      can: b.id < 2,
+      reason: 'Максимум',
+      buy: () => { s.baseId++; }
+    },
+    {
+      title: '⚡ Турбо-зарядки на базе (+8% к выручке)',
+      desc: s.turboCharge ? 'Установлены и приносят бонус' : 'Ускоряет оборот самокатов на линии',
+      price: 125000,
+      can: !s.turboCharge,
+      reason: 'Куплено',
+      buy: () => { s.turboCharge = true; }
+    },
+    {
+      title: '🛠️ Повысить квалификацию бригады',
+      desc: s.teamId < 2 ? `Переход на: ${TEAMS[s.teamId + 1].name}` : 'У вас уже Топ-инженеры',
+      price: 85000,
+      can: s.teamId < 2,
+      reason: 'Максимум',
+      buy: () => { s.teamId++; }
+    }
+  ];
+
+  document.getElementById('shop-list').innerHTML = items.map((it, idx) => `
+    <div class="shop-item">
+      <div>
+        <div style="font-weight:700">${it.title}</div>
+        <div class="section-sub" style="margin:2px 0 0">${it.desc}</div>
+      </div>
+      <button class="${it.can ? 'btn-primary' : 'btn-ghost'} num" ${it.can ? '' : 'disabled style="opacity:0.5"'} onclick="buyShop(${idx})">
+        ${it.can ? fmt(it.price) : it.reason}
+      </button>
+    </div>`).join('');
+  window._shopItems = items;
+}
+
+function buyShop(idx) {
+  const it = window._shopItems[idx];
+  const s = S();
+  if (!it || !it.can) return;
+  if (s.budget < it.price) {
+    playTone('lose');
+    showToast('⚠️ Недостаточно средств в бюджете!');
+    return;
+  }
+  s.budget -= it.price;
+  it.buy();
+  playTone('win');
+  updateTopbar();
+  pulseBudget(-it.price);
+  if (s.screen === 'shift') renderShift();
+  renderShop();
+  saveAll();
+  showToast('✅ Улучшение приобретено!');
+}
+
+function toggleTheme() {
+  app.theme = app.theme === 'dark' ? 'light' : 'dark';
+  playTone('click');
+  applyAppearance();
+  saveAll();
+}
+
+function toggleGlass() {
+  app.glass = !app.glass;
+  playTone('click');
+  applyAppearance();
+  saveAll();
+}
+
+function toggleSound() {
+  app.sound = !app.sound;
+  if (app.sound) playTone('click');
+  applyAppearance();
+  saveAll();
+}
+
+let toastTimer = null;
+function showToast(text) {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+window.addEventListener('beforeunload', saveAll);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveAll(); });
+
+loadAll();
+selectBrand(S().brand);
+showScreen(S().screen);
+</script>
+</body>
+</html>
