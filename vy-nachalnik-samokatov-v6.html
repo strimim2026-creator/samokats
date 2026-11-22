@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вы начальник самокатов! — Бизнес-симулятор</title>
+    <style>
+        :root {
+            --bg-main: #0d0f14;
+            --bg-card: #161922;
+            --bg-card-elevated: #1e222d;
+            --bg-card-hover: #252a38;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #ffcc00;
+            --accent-hover: #ffd633;
+            --accent-text: #0f172a;
+            --accent-glow: rgba(255, 204, 0, 0.25);
+            --accent-soft: rgba(255, 204, 0, 0.12);
+            --border: #2a303e;
+            --danger: #ef4444;
+            --danger-soft: rgba(239, 68, 68, 0.15);
+            --success: #22c55e;
+            --success-soft: rgba(34, 197, 94, 0.15);
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
+            --shadow-lg: 0 20px 45px rgba(0, 0, 0, 0.5);
+            --glass-bg: rgba(22, 25, 34, 0.78);
+            --glass-blur: blur(0px);
+        }
+
+        body.mts-theme {
+            --accent: #9333ea;
+            --accent-hover: #a855f7;
+            --accent-text: #ffffff;
+            --accent-glow: rgba(147, 51, 234, 0.3);
+            --accent-soft: rgba(147, 51, 234, 0.15);
+        }
+
+        body.light-theme {
+            --bg-main: #eef2f6;
+            --bg-card: #ffffff;
+            --bg-card-elevated: #f8fafc;
+            --bg-card-hover: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            --accent-text: #ffffff;
+            --accent-glow: rgba(245, 158, 11, 0.22);
+            --accent-soft: rgba(245, 158, 11, 0.12);
+            --border: #cbd5e1;
+            --danger: #dc2626;
+            --danger-soft: rgba(220, 38, 38, 0.1);
+            --success: #16a34a;
+            --success-soft: rgba(22, 163, 74, 0.12);
+            --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.06);
+            --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12);
+            --glass-bg: rgba(255, 255, 255, 0.84);
+        }
+
+        body.light-theme.mts-theme {
+            --accent: #7e22ce;
+            --accent-hover: #6b21a8;
+            --accent-text: #ffffff;
+            --accent-glow: rgba(126, 34, 206, 0.2);
+            --accent-soft: rgba(126, 34, 206, 0.1);
+        }
+
+        body.glass-on {
+            --glass-blur: blur(16px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            background-image:
+                radial-gradient(circle at 12% 10%, var(--accent-soft), transparent 36%),
+                radial-gradient(circle at 88% 90%, rgba(59, 130, 246, 0.08), transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            transition: background-color 0.35s ease, color 0.35s ease;
+            padding-bottom: 48px;
+        }
+
+        .container {
+            max-width: 1020px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Плавные анимации экранов и элементов */
+        @keyframes screenFadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(14px) scale(0.99);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes cardStagger {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+            50% { box-shadow: 0 0 18px 2px var(--accent-glow); }
+        }
+
+        .screen-animate {
+            animation: screenFadeSlide 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Верхняя шторка HUD */
+        .topbar-wrap {
+            position: sticky;
+            top: 12px;
+            z-index: 60;
+            margin-bottom: 22px;
+        }
+
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 10px 14px;
+            box-shadow: var(--shadow-sm);
+            transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+        }
+
+        .hud-left, .hud-right {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border-radius: 13px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 0 14px var(--accent-glow);
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .hud-capsule {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            background: var(--bg-card-elevated);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            overflow: hidden;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .hud-cell {
+            padding: 7px 12px;
+            font-size: 13.5px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-right: 1px solid var(--border);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hud-cell:last-child {
+            border-right: none;
+        }
+
+        .hud-money {
+            background: var(--success-soft);
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        /* Кнопки */
+        .btn {
+            background: var(--bg-card-elevated);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(0) scale(0.97);
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .btn-icon {
+            padding: 8px 11px;
+            font-size: 15px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--accent-text);
+            border-color: var(--accent);
+            box-shadow: 0 6px 18px var(--accent-glow);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            box-shadow: 0 10px 24px var(--accent-glow);
+        }
+
+        .btn-lg {
+            padding: 13px 26px;
+            font-size: 15.5px;
+            border-radius: 14px;
+        }
+
+        .btn-danger {
+            background: var(--danger-soft);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        /* Карточки и секции */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 24px;
+            margin-bottom: 18px;
+            box-shadow: var(--shadow-sm);
+            transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+        }
+
+        .hero-header {
+            text-align: center;
+            max-width: 640px;
+            margin: 0 auto 22px;
+        }
+
+        .hero-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--bg-card-elevated);
+            border: 1px solid var(--border);
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        h1 { font-size: 30px; letter-spacing: -0.02em; margin-bottom: 8px; }
+        h2 { font-size: 20px; letter-spacing: -0.01em; margin-bottom: 6px; }
+        h3 { font-size: 16px; margin-bottom: 5px; }
+        p.muted { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 16px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        /* Карточки выбора со стикерами */
+        .select-card {
+            position: relative;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+            cursor: pointer;
+            transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+            animation: cardStagger 0.35s ease backwards;
+        }
+
+        .select-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .select-card.active {
+            border-color: var(--accent);
+            background: linear-gradient(180deg, var(--accent-soft), var(--bg-card) 65%);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .sticker-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .sticker-box {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: var(--bg-card-elevated);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .select-card:hover .sticker-box,
+        .select-card.active .sticker-box {
+            transform: scale(1.08) rotate(-3deg);
+            border-color: var(--accent);
+        }
+
+        .corner-badge {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 4px 9px;
+            border-radius: 8px;
+            background: var(--bg-card-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .select-card.active .corner-badge {
+            background: var(--accent);
+            color: var(--accent-text);
+            border-color: var(--accent);
+        }
+
+        .meta-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .chip {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 9px;
+            border-radius: 8px;
+            background: var(--bg-card-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        /* Центральный блок старта */
+        .cta-center-box {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 18px;
+            background: var(--bg-card-elevated);
+            border: 1px dashed var(--border);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cta-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        /* Нумерация шагов закупки */
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 9px;
+            background: var(--accent);
+            color: var(--accent-text);
+            font-weight: 800;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Квесты */
+        .quest-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.2s ease, border-color 0.2s ease, opacity 0.25s ease;
+            animation: cardStagger 0.35s ease backwards;
+        }
+
+        .quest-item:hover:not(.done) {
+            border-color: var(--accent);
+        }
+
+        .quest-item.urgent {
+            border-left: 4px solid var(--danger);
+        }
+
+        .quest-item.done {
+            opacity: 0.68;
+            border-left: 4px solid var(--success);
+        }
+
+        .quest-choices {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        /* Плавные модальные окна */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 8, 15, 0.68);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 120;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.28s ease;
+        }
+
+        .modal-backdrop.open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            max-width: 560px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+            transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+        }
+
+        .modal-backdrop.open .modal {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        /* Тост-уведомление с плавным выездом */
+        .toast {
+            position: fixed;
+            bottom: 22px;
+            right: 22px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent);
+            color: var(--text-main);
+            padding: 13px 18px;
+            border-radius: 14px;
+            box-shadow: var(--shadow-lg);
+            z-index: 200;
+            max-width: 350px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(16px) scale(0.96);
+            pointer-events: none;
+            transition: opacity 0.28s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .hidden { display: none !important; }
+        .row-between { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .tag { font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 8px; background: var(--bg-card-elevated); border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Верхняя шторка (HUD) -->
+    <div class="topbar-wrap">
+        <header class="topbar">
+            <div class="hud-left">
+                <div class="brand-pill" id="ui-brand">⚡ Яндекс Go</div>
+                <div class="hud-capsule">
+                    <span class="hud-cell" id="ui-slot">📁 Слот 1</span>
+                    <span class="hud-cell hud-money" id="ui-money">💰 420 000 ₽</span>
+                    <span class="hud-cell" id="ui-day">📅 День 1</span>
+                    <span class="hud-cell" id="ui-credit">💳 Кредит: 0 дн.</span>
+                </div>
+            </div>
+            <div class="hud-right">
+                <button class="btn hidden" id="btn-go-menu" onclick="openMainMenu()">🏠 Меню</button>
+                <button class="btn hidden" id="btn-open-shop" onclick="openModal('modal-shop')">🏪 Магазин</button>
+                <button class="btn btn-primary hidden" id="btn-end-day" onclick="finishDay()">Завершить день ✓</button>
+                <button class="btn btn-icon" id="btn-sound" title="Звук" onclick="toggleSound()">🔊</button>
+                <button class="btn btn-icon" title="Настройки" onclick="openModal('modal-settings')">⚙</button>
+            </div>
+        </header>
+    </div>
+
+    <!-- ЭКРАН 1: Главное стартовое меню -->
+    <section id="screen-start" class="card screen-animate">
+        <div class="hero-header">
+            <span class="hero-pill">🛴 Бизнес-симулятор кикшеринга</span>
+            <h1>Вы начальник самокатов!</h1>
+            <p class="muted">Выберите франшизу, соберите стартовый парк и удерживайте компанию в плюсе среди городских проверок, часов пик и забот о команде.</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="select-card active" id="brand-yandex" onclick="selectBrand('yandex')">
+                <div class="sticker-row">
+                    <div class="sticker-box">⚡</div>
+                    <span class="corner-badge">Центр города</span>
+                </div>
+                <h2>Яндекс Go</h2>
+                <p class="muted">Высокая узнаваемость в центре города и плотный поток коротких поездок в часы пик.</p>
+                <div class="meta-chips">
+                    <span class="chip">🎨 Стиль: Жёлтый</span>
+                    <span class="chip">📈 Спрос: +8%</span>
+                </div>
+            </div>
+
+            <div class="select-card" id="brand-mts" onclick="selectBrand('mts')">
+                <div class="sticker-row">
+                    <div class="sticker-box">🟣</div>
+                    <span class="corner-badge">Спальные районы</span>
+                </div>
+                <h2>МТС Юрент</h2>
+                <p class="muted">Сильная лояльность по подписке и стабильный спрос в спальных и парковых зонах.</p>
+                <div class="meta-chips">
+                    <span class="chip">🎨 Стиль: Фиолетовый</span>
+                    <span class="chip">📈 Спрос: +5%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-center-box">
+            <p class="muted" id="start-status-hint">Стартовый капитал инвесторов: <strong>420 000 ₽</strong> • Доступно 3 слота сохранения</p>
+            <div class="cta-actions">
+                <button class="btn btn-primary btn-lg hidden" id="btn-continue" onclick="continueGame()">▶ Продолжить карьеру (День 1)</button>
+                <button class="btn btn-primary btn-lg" id="btn-start-new" onclick="goToSetup()">🚀 Начать карьеру</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ЭКРАН 2: Стартовая закупка и сборка бизнеса -->
+    <section id="screen-setup" class="card hidden">
+        <div class="step-header">
+            <span class="step-num">1</span>
+            <h2>Размер стартового парка</h2>
+        </div>
+        <p class="muted">При первом запуске списывается разовый взнос за открытие, далее — ежедневная аренда.</p>
+        <div class="grid-3" id="setup-fleet"></div>
+
+        <div class="step-header" style="margin-top:24px;">
+            <span class="step-num">2</span>
+            <h2>Аренда базы и зарядной станции</h2>
+        </div>
+        <p class="muted">Вместимость базы должна покрывать размер вашего парка. Быстрая зарядка увеличивает выручку.</p>
+        <div class="grid-3" id="setup-base"></div>
+
+        <div class="step-header" style="margin-top:24px;">
+            <span class="step-num">3</span>
+            <h2>Команда смены</h2>
+        </div>
+        <p class="muted">От квалификации персонала зависит устойчивость к поломкам, штрафам и простоям.</p>
+        <div class="grid-3" id="setup-staff"></div>
+
+        <div class="card" style="margin-top:22px; background:var(--bg-card-elevated); margin-bottom:0;">
+            <div class="row-between">
+                <div>
+                    <strong id="setup-check">Проверка конфигурации...</strong>
+                    <p class="muted">После старта Дня 1 расширить парк или базу можно в Магазине.</p>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="openMainMenu()">← В меню</button>
+                    <button class="btn btn-primary" id="btn-launch-day1" onclick="launchGame()">Запустить День 1 🚀</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ЭКРАН 3: Игровая смена и квесты -->
+    <section id="screen-game" class="hidden">
+        <div class="card">
+            <div class="row-between">
+                <div>
+                    <h2 id="dash-summary">Парк: 35 шт. • База: Гараж</h2>
+                    <p class="muted" id="dash-quests-info">Выполнено задач: 0/5 • Срочных заказов: 0</p>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn" onclick="openModal('modal-shop')">🏪 Магазин</button>
+                    <button class="btn btn-primary" onclick="finishDay()">Завершить день ✓</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Оперативные задачи и события смены</h2>
+            <p class="muted" style="margin-bottom:14px;">Решайте рабочие вопросы сотрудников и города до завершения смены.</p>
+            <div id="quests-list"></div>
+        </div>
+    </section>
+</div>
+
+<!-- Модальное окно: Итоги дня -->
+<div class="modal-backdrop" id="modal-report">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="report-title">Финансовый отчёт — Итоги Дня 1</h2>
+        </div>
+        <p class="muted" style="margin-bottom:14px;">Все списания и налоги учтены автоматически.</p>
+        <div id="report-body" style="display:flex; flex-direction:column; gap:8px; margin-bottom:18px;"></div>
+        <div class="row-between">
+            <button class="btn" onclick="closeModal('modal-report'); openModal('modal-shop')">🏪 Открыть магазин</button>
+            <button class="btn btn-primary" onclick="startNextDay()">Начать следующий день ➔</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно: Магазин -->
+<div class="modal-backdrop" id="modal-shop">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>🏪 Магазин развития</h2>
+            <button class="btn btn-icon" onclick="closeModal('modal-shop')">✕</button>
+        </div>
+        <p class="muted" style="margin-bottom:14px;">Расширение действующего бизнеса требует повышенных вложений.</p>
+        <div id="shop-items" style="display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+</div>
+
+<!-- Модальное окно: Настройки и сохранения -->
+<div class="modal-backdrop" id="modal-settings">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>⚙ Настройки и сохранения</h2>
+            <button class="btn btn-icon" onclick="closeModal('modal-settings')">✕</button>
+        </div>
+
+        <h3>Оформление интерфейса</h3>
+        <div class="grid-3" style="margin:10px 0 18px;">
+            <div class="select-card" id="theme-card-dark" style="padding:12px;" onclick="setTheme('dark')">
+                <strong>🌙 Тёмная</strong>
+                <p class="muted" style="font-size:12px;">Ночной режим</p>
+            </div>
+            <div class="select-card" id="theme-card-light" style="padding:12px;" onclick="setTheme('light')">
+                <strong>☀ Светлая</strong>
+                <p class="muted" style="font-size:12px;">Дневной контраст</p>
+            </div>
+            <div class="select-card" id="theme-card-glass" style="padding:12px;" onclick="toggleGlass()">
+                <strong>🪟 Стекло</strong>
+                <p class="muted" style="font-size:12px;" id="glass-status-text">Размытие: ВЫКЛ</p>
+            </div>
+        </div>
+
+        <h3>Слоты автосохранения (3 профиля)</h3>
+        <p class="muted" style="margin-bottom:10px;">Прогресс сохраняется автоматически при каждом действии.</p>
+        <div id="slots-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+</div>
+
+<!-- Модальное окно: Долг -->
+<div class="modal-backdrop" id="modal-debt">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 style="color:var(--danger);">⚠ Баланс опустился до 0 ₽ — Долг!</h2>
+        </div>
+        <p class="muted" style="margin-bottom:16px;">На счёте компании не осталось средств для продолжения работы. Выберите дальнейшее действие:</p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <button class="btn btn-primary" onclick="takeCredit()">💳 Взять кредит (покрыть долг + 80 000 ₽ на оборот, платить 15 000 ₽/день 3 дня)</button>
+            <button class="btn btn-danger" onclick="resetCurrentSlot()">🔄 Начать игру заново в этом слоте</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Уведомление</div>
+
+<script>
+    const FLEET_OPTS = [
+        { id: 'f1', sticker: '🛴', badge: 'Старт', name: 'Малый парк (35 шт.)', count: 35, initCost: 140000, rent: 7000 },
+        { id: 'f2', sticker: '🛵', badge: 'Оптимально', name: 'Средний парк (60 шт.)', count: 60, initCost: 220000, rent: 12000 },
+        { id: 'f3', sticker: '🚀', badge: 'Масштаб', name: 'Крупный парк (90 шт.)', count: 90, initCost: 310000, rent: 18000 }
+    ];
+
+    const BASE_OPTS = [
+        { id: 'b1', sticker: '🏠', badge: 'Базовый', name: 'Гараж', cap: 40, initCost: 40000, rent: 3000, bonus: 1.0 },
+        { id: 'b2', sticker: '⚡', badge: 'Быстрый ток', name: 'Ангар + быстрая зарядка', cap: 75, initCost: 85000, rent: 6500, bonus: 1.15 },
+        { id: 'b3', sticker: '🏭', badge: 'Максимум', name: 'Технопарк Pro', cap: 130, initCost: 140000, rent: 11000, bonus: 1.3 }
+    ];
+
+    const STAFF_OPTS = [
+        { id: 's1', sticker: '🧑‍🎓', badge: 'Эконом', name: 'Новички на подработке', initCost: 20000, rent: 4000, safety: 0.7 },
+        { id: 's2', sticker: '👷', badge: 'Надёжно', name: 'Опытные техники', initCost: 45000, rent: 8000, safety: 1.0 },
+        { id: 's3', sticker: '🦸', badge: 'Элита', name: 'Спецбригада 24/7', initCost: 80000, rent: 14000, safety: 1.25 }
+    ];
+
+    const QUEST_POOL = [
+        {
+            title: '🤕 У бухгалтерши сильно разболелась голова перед сдачей отчёта',
+            desc: 'Анна Петровна держится за виски: «Голова раскалывается, цифры плывут, а через час налоговая сверка!» Что делать?',
+            urgent: true,
+            choices: [
+                {
+                    label: '💊 Купить таблетки, чай и дать отдохнуть 1 час (-2 500 ₽)',
+                    money: -2500,
+                    revBonus: 12000,
+                    msg: 'Бухгалтер восстановилась, вовремя сдала отчёт и нашла налоговый вычет (+12 000 ₽)!'
+                },
+                {
+                    label: '☕ Попросить потерпеть до вечера ради отчёта',
+                    money: -9000,
+                    revBonus: 0,
+                    msg: 'Из-за сильной боли бухгалтер ошиблась в расчётах: пришёл штраф -9 000 ₽.'
+                },
+                {
+                    label: '🚕 Отпустить домой и вызвать бухгалтера на аутсорсе (-6 000 ₽)',
+                    money: -6000,
+                    revBonus: 5000,
+                    msg: 'Сотрудница благодарна за заботу, а приглашённый специалист закрыл день без ошибок.'
+                }
+            ]
+        },
+        {
+            title: '😵 У старшего механика закружилась голова в ремзоне',
+            desc: 'В мастерской душно из-за зарядных блоков, у техника разболелась голова и упала скорость ремонта.',
+            urgent: false,
+            choices: [
+                {
+                    label: '🌬 Проветрить ангар, купить воду и аптечку (-3 000 ₽)',
+                    money: -3000,
+                    revBonus: 10000,
+                    msg: 'Условия труда улучшены! Бригада вернула на линию 8 лишних самокатов (+10 000 ₽).'
+                },
+                {
+                    label: '🔧 Сказать, чтобы работал дальше без перерыва',
+                    money: -7500,
+                    revBonus: 0,
+                    msg: 'Механик перепутал контроллеры: ремонт обошёлся в -7 500 ₽.'
+                }
+            ]
+        },
+        {
+            title: '⚡ Час пик у метро: не хватает заряженных самокатов',
+            desc: 'Диспетчер сообщает о всплеске спроса возле центральных станций.',
+            urgent: true,
+            choices: [
+                {
+                    label: '🚐 Срочный перегон фургоном (-4 000 ₽)',
+                    money: -4000,
+                    revBonus: 18000,
+                    msg: 'Точка закрыта вовремя! Выручка за час пик выросла на +18 000 ₽.'
+                },
+                {
+                    label: '⏳ Оставить всё как есть',
+                    money: 0,
+                    revBonus: 0,
+                    msg: 'Клиенты ушли к конкурентам, день прошёл спокойно.'
+                }
+            ]
+        },
+        {
+            title: '🚔 Рейд городской инспекции по парковке',
+            desc: 'Часть самокатов перекрывает узкий тротуар в центре.',
+            urgent: true,
+            choices: [
+                {
+                    label: '🏃 Отправить скаутов расставить парк ровно (-2 000 ₽)',
+                    money: -2000,
+                    revBonus: 4000,
+                    msg: 'Инспекция похвалила порядок, штрафов удалось избежать.'
+                },
+                {
+                    label: '🙈 Игнорировать предупреждение',
+                    money: -15000,
+                    revBonus: 0,
+                    msg: 'Выписан городской штраф за хаотичную парковку: -15 000 ₽.'
+                }
+            ]
+        },
+        {
+            title: '🔋 Сбой прошивки на партии самокатов',
+            desc: '10 самокатов выдают ошибку датчика скорости.',
+            urgent: false,
+            choices: [
+                {
+                    label: '💻 Обновить ПО через сервис-центр (-5 000 ₽)',
+                    money: -5000,
+                    revBonus: 14000,
+                    msg: 'Все самокаты снова в строю и приносят прибыль.'
+                },
+                {
+                    label: '🛠 Перезагрузить вручную силами смены',
+                    money: 0,
+                    revBonus: 3000,
+                    msg: 'Половина самокатов заработала, остальные ждут завтрашней смены.'
+                }
+            ]
+        },
+        {
+            title: '🌧 Внезапный дождь в спальном районе',
+            desc: 'Поездки упали, но выросла потребность в сушке и проверке тормозов.',
+            urgent: false,
+            choices: [
+                {
+                    label: '🧼 Провести внеплановую протирку и диагностику (-2 500 ₽)',
+                    money: -2500,
+                    revBonus: 9000,
+                    msg: 'Ни одной поломки после дождя, клиенты довольны!'
+                },
+                {
+                    label: '☔ Ничего не предпринимать',
+                    money: -4500,
+                    revBonus: 0,
+                    msg: 'Пара самокатов заскрипела — потратились на колодки (-4 500 ₽).'
+                }
+            ]
+        }
+    ];
+
+    let appSettings = {
+        theme: 'dark',
+        glass: false,
+        sound: true,
+        activeSlot: 1
+    };
+
+    function defaultState(slotId) {
+        return {
+            slotId,
+            started: false,
+            brand: 'yandex',
+            money: 420000,
+            day: 1,
+            creditDays: 0,
+            fleetIdx: 0,
+            baseIdx: 0,
+            staffIdx: 1,
+            extraScooters: 0,
+            quests: [],
+            dayRevBonus: 0
+        };
+    }
+
+    let state = defaultState(1);
+
+    function playClickSound() {
+        if (!appSettings.sound) return;
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(520, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(280, ctx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.055);
+        } catch (e) {}
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem('scooter_sim_settings');
+        if (saved) appSettings = { ...appSettings, ...JSON.parse(saved) };
+        applyVisualSettings();
+    }
+
+    function saveSettings() {
+        localStorage.setItem('scooter_sim_settings', JSON.stringify(appSettings));
+    }
+
+    function loadSlot(slotId) {
+        appSettings.activeSlot = slotId;
+        saveSettings();
+        const raw = localStorage.getItem('scooter_sim_slot_' + slotId);
+        state = raw ? JSON.parse(raw) : defaultState(slotId);
+        openMainMenu();
+    }
+
+    function saveGame() {
+        localStorage.setItem('scooter_sim_slot_' + state.slotId, JSON.stringify(state));
+    }
+
+    function applyVisualSettings() {
+        document.body.classList.toggle('light-theme', appSettings.theme === 'light');
+        document.body.classList.toggle('glass-on', appSettings.glass);
+        document.body.classList.toggle('mts-theme', state.brand === 'mts');
+
+        const dCard = document.getElementById('theme-card-dark');
+        const lCard = document.getElementById('theme-card-light');
+        const gCard = document.getElementById('theme-card-glass');
+        if (dCard && lCard && gCard) {
+            dCard.classList.toggle('active', appSettings.theme === 'dark');
+            lCard.classList.toggle('active', appSettings.theme === 'light');
+            gCard.classList.toggle('active', appSettings.glass);
+            document.getElementById('glass-status-text').textContent = `Размытие: ${appSettings.glass ? 'ВКЛ' : 'ВЫКЛ'}`;
+        }
+        document.getElementById('btn-sound').textContent = appSettings.sound ? '🔊' : '🔇';
+    }
+
+    function setTheme(t) {
+        playClickSound();
+        appSettings.theme = t;
+        saveSettings();
+        applyVisualSettings();
+    }
+
+    function toggleGlass() {
+        playClickSound();
+        appSettings.glass = !appSettings.glass;
+        saveSettings();
+        applyVisualSettings();
+    }
+
+    function toggleSound() {
+        appSettings.sound = !appSettings.sound;
+        saveSettings();
+        applyVisualSettings();
+        if (appSettings.sound) playClickSound();
+        showToast(appSettings.sound ? 'Звук включён' : 'Звук выключен');
+    }
+
+    function formatRub(num) {
+        return num.toLocaleString('ru-RU') + ' ₽';
+    }
+
+    function showToast(text) {
+        const el = document.getElementById('toast');
+        el.textContent = text;
+        el.classList.add('show');
+        clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => {
+            el.classList.remove('show');
+        }, 3400);
+    }
+
+    function showScreen(id) {
+        ['screen-start', 'screen-setup', 'screen-game'].forEach(s => {
+            const el = document.getElementById(s);
+            el.classList.remove('screen-animate');
+            if (s === id) {
+                el.classList.remove('hidden');
+                void el.offsetWidth; // перезапуск CSS-анимации
+                el.classList.add('screen-animate');
+            } else {
+                el.classList.add('hidden');
+            }
+        });
+
+        const inGame = (id === 'screen-game');
+        const notMenu = (id !== 'screen-start');
+        document.getElementById('btn-go-menu').classList.toggle('hidden', !notMenu);
+        document.getElementById('btn-open-shop').classList.toggle('hidden', !inGame);
+        document.getElementById('btn-end-day').classList.toggle('hidden', !inGame);
+    }
+
+    function openMainMenu() {
+        playClickSound();
+        applyVisualSettings();
+        updateTopBar();
+        selectBrand(state.brand, false);
+
+        const btnCont = document.getElementById('btn-continue');
+        const btnNew = document.getElementById('btn-start-new');
+        const hint = document.getElementById('start-status-hint');
+
+        if (state.started) {
+            btnCont.classList.remove('hidden');
+            btnCont.textContent = `▶ Продолжить карьеру (День ${state.day})`;
+            btnNew.classList.remove('btn-primary');
+            btnNew.textContent = '🔄 Начать заново';
+            hint.innerHTML = `Активный прогресс в <strong>Слоте ${state.slotId}</strong>: День ${state.day} • Баланс <strong>${formatRub(state.money)}</strong>`;
+        } else {
+            btnCont.classList.add('hidden');
+            btnNew.classList.add('btn-primary');
+            btnNew.textContent = '🚀 Начать карьеру';
+            hint.innerHTML = `Стартовый капитал инвесторов: <strong>420 000 ₽</strong> • Доступно 3 слота сохранения`;
+        }
+
+        showScreen('screen-start');
+    }
+
+    function selectBrand(brand, sound = true) {
+        if (sound) playClickSound();
+        state.brand = brand;
+        document.getElementById('brand-yandex').classList.toggle('active', brand === 'yandex');
+        document.getElementById('brand-mts').classList.toggle('active', brand === 'mts');
+        applyVisualSettings();
+        updateTopBar();
+    }
+
+    function goToSetup() {
+        playClickSound();
+        const chosenBrand = document.getElementById('brand-mts').classList.contains('active') ? 'mts' : 'yandex';
+        state = defaultState(appSettings.activeSlot);
+        state.brand = chosenBrand;
+        updateTopBar();
+        renderSetup();
+        showScreen('screen-setup');
+    }
+
+    function continueGame() {
+        playClickSound();
+        if (state.started) {
+            showScreen('screen-game');
+            renderGame();
+        }
+    }
+
+    function renderSetup() {
+        const fWrap = document.getElementById('setup-fleet');
+        fWrap.innerHTML = FLEET_OPTS.map((f, i) => `
+            <div class="select-card ${state.fleetIdx === i ? 'active' : ''}" style="animation-delay:${i * 0.05}s" onclick="playClickSound(); state.fleetIdx=${i}; renderSetup()">
+                <div class="sticker-row">
+                    <div class="sticker-box">${f.sticker}</div>
+                    <span class="corner-badge">${f.badge}</span>
+                </div>
+                <h3>${f.name}</h3>
+                <div class="meta-chips">
+                    <span class="chip">Взнос: ${formatRub(f.initCost)}</span>
+                    <span class="chip">${formatRub(f.rent)}/день</span>
+                </div>
+            </div>
+        `).join('');
+
+        const bWrap = document.getElementById('setup-base');
+        bWrap.innerHTML = BASE_OPTS.map((b, i) => `
+            <div class="select-card ${state.baseIdx === i ? 'active' : ''}" style="animation-delay:${i * 0.05}s" onclick="playClickSound(); state.baseIdx=${i}; renderSetup()">
+                <div class="sticker-row">
+                    <div class="sticker-box">${b.sticker}</div>
+                    <span class="corner-badge">${b.badge}</span>
+                </div>
+                <h3>${b.name}</h3>
+                <p class="muted" style="font-size:13px;">Мест: до ${b.cap} шт. • Бонус выручки: x${b.bonus}</p>
+                <div class="meta-chips">
+                    <span class="chip">Запуск: ${formatRub(b.initCost)}</span>
+                    <span class="chip">${formatRub(b.rent)}/день</span>
+                </div>
+            </div>
+        `).join('');
+
+        const sWrap = document.getElementById('setup-staff');
+        sWrap.innerHTML = STAFF_OPTS.map((s, i) => `
+            <div class="select-card ${state.staffIdx === i ? 'active' : ''}" style="animation-delay:${i * 0.05}s" onclick="playClickSound(); state.staffIdx=${i}; renderSetup()">
+                <div class="sticker-row">
+                    <div class="sticker-box">${s.sticker}</div>
+                    <span class="corner-badge">${s.badge}</span>
+                </div>
+                <h3>${s.name}</h3>
+                <div class="meta-chips">
+                    <span class="chip">Найм: ${formatRub(s.initCost)}</span>
+                    <span class="chip">${formatRub(s.rent)}/день</span>
+                </div>
+            </div>
+        `).join('');
+
+        const fleet = FLEET_OPTS[state.fleetIdx];
+        const base = BASE_OPTS[state.baseIdx];
+        const staff = STAFF_OPTS[state.staffIdx];
+        const totalInit = fleet.initCost + base.initCost + staff.initCost;
+        const capOk = base.cap >= fleet.count;
+        const moneyOk = state.money >= totalInit;
+
+        const checkEl = document.getElementById('setup-check');
+        const btn = document.getElementById('btn-launch-day1');
+
+        if (!capOk) {
+            checkEl.textContent = `⚠ Вместимость базы (${base.cap}) меньше парка (${fleet.count})!`;
+            btn.disabled = true;
+        } else if (!moneyOk) {
+            checkEl.textContent = `⚠ Не хватает средств: нужно ${formatRub(totalInit)}`;
+            btn.disabled = true;
+        } else {
+            checkEl.textContent = `✅ Готово к старту! Взнос: ${formatRub(totalInit)} (остаток: ${formatRub(state.money - totalInit)})`;
+            btn.disabled = false;
+        }
+    }
+
+    function generateDailyQuests() {
+        const accountantQuest = JSON.parse(JSON.stringify(QUEST_POOL[0]));
+        const others = QUEST_POOL.slice(1).sort(() => Math.random() - 0.5).slice(0, 4);
+        const combined = [accountantQuest, ...others].sort(() => Math.random() - 0.5);
+        state.quests = combined.map((q, idx) => ({ ...q, id: idx, done: false, resultText: '' }));
+    }
+
+    function launchGame() {
+        playClickSound();
+        const totalInit = FLEET_OPTS[state.fleetIdx].initCost + BASE_OPTS[state.baseIdx].initCost + STAFF_OPTS[state.staffIdx].initCost;
+        state.money -= totalInit;
+        state.started = true;
+        state.day = 1;
+        state.dayRevBonus = 0;
+        generateDailyQuests();
+        saveGame();
+        updateTopBar();
+        showScreen('screen-game');
+        renderGame();
+        showToast('День 1 запущен! Удачи на линии!');
+    }
+
+    function resolveQuest(qId, choiceIdx) {
+        playClickSound();
+        const q = state.quests.find(item => item.id === qId);
+        if (!q || q.done) return;
+        const ch = q.choices[choiceIdx];
+        state.money += ch.money;
+        state.dayRevBonus += ch.revBonus;
+        q.done = true;
+        q.resultText = ch.msg;
+        saveGame();
+        updateTopBar();
+        renderGame();
+        showToast(ch.msg);
+        checkBankruptcy();
+    }
+
+    function renderGame() {
+        const fleet = FLEET_OPTS[state.fleetIdx];
+        const base = BASE_OPTS[state.baseIdx];
+        const totalScooters = fleet.count + state.extraScooters;
+        const doneCount = state.quests.filter(q => q.done).length;
+        const urgentCount = state.quests.filter(q => q.urgent && !q.done).length;
+
+        document.getElementById('dash-summary').textContent = `Парк: ${totalScooters} шт. • База: ${base.name}`;
+        document.getElementById('dash-quests-info').textContent = `Выполнено задач: ${doneCount}/${state.quests.length} • Срочных заказов: ${urgentCount}`;
+
+        const list = document.getElementById('quests-list');
+        list.innerHTML = state.quests.map((q, idx) => `
+            <div class="quest-item ${q.urgent ? 'urgent' : ''} ${q.done ? 'done' : ''}" style="animation-delay:${idx * 0.04}s">
+                <div class="row-between">
+                    <h3>${q.title}</h3>
+                    ${q.urgent && !q.done ? '<span class="tag" style="color:var(--danger);">🔥 Срочно</span>' : ''}
+                </div>
+                <p class="muted">${q.desc}</p>
+                ${q.done
+                    ? `<p style="color:var(--success); font-size:14px; font-weight:600;">✔ ${q.resultText}</p>`
+                    : `<div class="quest-choices">
+                        ${q.choices.map((c, cIdx) => `<button class="btn" onclick="resolveQuest(${q.id}, ${cIdx})">${c.label}</button>`).join('')}
+                       </div>`
+                }
+            </div>
+        `).join('');
+    }
+
+    function finishDay() {
+        playClickSound();
+        const fleet = FLEET_OPTS[state.fleetIdx];
+        const base = BASE_OPTS[state.baseIdx];
+        const staff = STAFF_OPTS[state.staffIdx];
+        const totalScooters = fleet.count + state.extraScooters;
+
+        const brandMult = state.brand === 'yandex' ? 1.08 : 1.05;
+        const ridesIncome = Math.round(totalScooters * 680 * base.bonus * brandMult) + state.dayRevBonus;
+        const expenses = fleet.rent + base.rent + staff.rent;
+        const creditPay = state.creditDays > 0 ? 15000 : 0;
+        const tax = Math.round(ridesIncome * 0.06);
+        const net = ridesIncome - expenses - creditPay - tax;
+
+        state.money += net;
+        if (state.creditDays > 0) state.creditDays--;
+
+        document.getElementById('report-title').textContent = `Финансовый отчёт — Итоги Дня ${state.day}`;
+        document.getElementById('report-body').innerHTML = `
+            <div class="row-between"><span>Выручка с поездок и квестов:</span><strong style="color:var(--success);">+${formatRub(ridesIncome)}</strong></div>
+            <div class="row-between"><span>Аренда парка, базы и смены:</span><span>-${formatRub(expenses)}</span></div>
+            <div class="row-between"><span>Налог УСН (6%):</span><span>-${formatRub(tax)}</span></div>
+            ${creditPay > 0 ? `<div class="row-between"><span>Платёж по кредиту:</span><span style="color:var(--danger);">-${formatRub(creditPay)}</span></div>` : ''}
+            <hr style="border-color:var(--border); margin:6px 0;">
+            <div class="row-between"><strong>Чистая прибыль за день:</strong><strong>${net >= 0 ? '+' : ''}${formatRub(net)}</strong></div>
+            <div class="row-between"><strong>Текущий баланс:</strong><strong>${formatRub(state.money)}</strong></div>
+        `;
+
+        saveGame();
+        updateTopBar();
+        if (!checkBankruptcy()) {
+            openModal('modal-report');
+        }
+    }
+
+    function startNextDay() {
+        playClickSound();
+        closeModal('modal-report');
+        state.day++;
+        state.dayRevBonus = 0;
+        generateDailyQuests();
+        saveGame();
+        updateTopBar();
+        renderGame();
+    }
+
+    function checkBankruptcy() {
+        if (state.money <= 0) {
+            closeModal('modal-report');
+            openModal('modal-debt');
+            return true;
+        }
+        return false;
+    }
+
+    function takeCredit() {
+        playClickSound();
+        state.money = 80000;
+        state.creditDays = 3;
+        saveGame();
+        updateTopBar();
+        closeModal('modal-debt');
+        showToast('Кредит оформлен: +80 000 ₽ на оборот!');
+    }
+
+    function resetCurrentSlot() {
+        playClickSound();
+        closeModal('modal-debt');
+        state = defaultState(appSettings.activeSlot);
+        saveGame();
+        openMainMenu();
+        showToast('Слот очищен. Начните новую карьеру!');
+    }
+
+    function renderShop() {
+        const base = BASE_OPTS[state.baseIdx];
+        const totalScooters = FLEET_OPTS[state.fleetIdx].count + state.extraScooters;
+        const canAddScooters = totalScooters + 10 <= base.cap;
+
+        document.getElementById('shop-items').innerHTML = `
+            <div class="quest-item">
+                <div class="row-between">
+                    <div>
+                        <h3>🛴 Докупить +10 самокатов в парк</h3>
+                        <p class="muted">Свободно мест на базе: ${base.cap - totalScooters} шт.</p>
+                    </div>
+                    <button class="btn btn-primary" ${(!canAddScooters || state.money < 65000) ? 'disabled' : ''} onclick="buyUpgrade('scooters')">65 000 ₽</button>
+                </div>
+            </div>
+            <div class="quest-item">
+                <div class="row-between">
+                    <div>
+                        <h3>🏭 Расширить базу до следующего уровня</h3>
+                        <p class="muted">Текущая: ${base.name} (до ${base.cap} шт.)</p>
+                    </div>
+                    <button class="btn btn-primary" ${(state.baseIdx >= BASE_OPTS.length - 1 || state.money < 95000) ? 'disabled' : ''} onclick="buyUpgrade('base')">
+                        ${state.baseIdx >= BASE_OPTS.length - 1 ? 'Максимум' : '95 000 ₽'}
+                    </button>
+                </div>
+            </div>
+            <div class="quest-item">
+                <div class="row-between">
+                    <div>
+                        <h3>👷 Повысить квалификацию смены</h3>
+                        <p class="muted">Текущая: ${STAFF_OPTS[state.staffIdx].name}</p>
+                    </div>
+                    <button class="btn btn-primary" ${(state.staffIdx >= STAFF_OPTS.length - 1 || state.money < 55000) ? 'disabled' : ''} onclick="buyUpgrade('staff')">
+                        ${state.staffIdx >= STAFF_OPTS.length - 1 ? 'Максимум' : '55 000 ₽'}
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function buyUpgrade(type) {
+        playClickSound();
+        if (type === 'scooters' && state.money >= 65000) {
+            state.money -= 65000;
+            state.extraScooters += 10;
+            showToast('Куплено +10 самокатов!');
+        } else if (type === 'base' && state.money >= 95000 && state.baseIdx < BASE_OPTS.length - 1) {
+            state.money -= 95000;
+            state.baseIdx++;
+            showToast('База расширена!');
+        } else if (type === 'staff' && state.money >= 55000 && state.staffIdx < STAFF_OPTS.length - 1) {
+            state.money -= 55000;
+            state.staffIdx++;
+            showToast('Команда смены усилена!');
+        }
+        saveGame();
+        updateTopBar();
+        renderShop();
+        renderGame();
+    }
+
+    function renderSlots() {
+        const wrap = document.getElementById('slots-list');
+        wrap.innerHTML = [1, 2, 3].map(id => {
+            const raw = localStorage.getItem('scooter_sim_slot_' + id);
+            const data = raw ? JSON.parse(raw) : null;
+            const active = appSettings.activeSlot === id;
+            return `
+                <div class="select-card ${active ? 'active' : ''}" style="padding:12px;" onclick="playClickSound(); loadSlot(${id}); renderSlots(); closeModal('modal-settings');">
+                    <div class="row-between">
+                        <strong>Слот ${id} ${active ? '(Активен)' : ''}</strong>
+                        <span class="muted">${data && data.started ? `День ${data.day} • ${formatRub(data.money)}` : 'Пустой профиль'}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function openModal(id) {
+        playClickSound();
+        if (id === 'modal-shop') renderShop();
+        if (id === 'modal-settings') {
+            applyVisualSettings();
+            renderSlots();
+        }
+        document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+        playClickSound();
+        document.getElementById(id).classList.remove('open');
+    }
+
+    function updateTopBar() {
+        document.getElementById('ui-brand').textContent = state.brand === 'mts' ? '🟣 МТС Юрент' : '⚡ Яндекс Go';
+        document.getElementById('ui-slot').textContent = `📁 Слот ${state.slotId}`;
+        document.getElementById('ui-money').textContent = `💰 ${formatRub(state.money)}`;
+        document.getElementById('ui-day').textContent = `📅 День ${state.day}`;
+        document.getElementById('ui-credit').textContent = `💳 Кредит: ${state.creditDays} дн.`;
+    }
+
+    window.addEventListener('beforeunload', saveGame);
+    loadSettings();
+    loadSlot(appSettings.activeSlot);
+</script>
+</body>
+</html>
